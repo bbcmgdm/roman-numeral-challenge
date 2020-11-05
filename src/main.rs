@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 use regex::Regex;
 use std::collections::HashMap;
+use std::{env, process};
 
 lazy_static! {
     static ref VALUE_MAP: HashMap<&'static str, u64> = {
@@ -52,7 +53,24 @@ fn convert(input: &str) -> Result<u64, ()> {
 }
 
 fn main() {
-    println!("{:?}", convert("II"));
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 2 || args.len() > 2 {
+        eprintln!("Usage: {} VALUE", args[0]);
+        process::exit(1);
+    }
+
+    if !is_valid(&args[1]) {
+        eprintln!("Invalid Roman numeral {}", args[1]);
+        process::exit(2);
+    }
+
+    if let Ok(result) = convert(&args[1]) {
+        println!("{:?}", result);
+    } else {
+        eprintln!("Failed to convert Roman numeral {}", args[1]);
+        process::exit(2);
+    }
 }
 
 #[cfg(test)]
