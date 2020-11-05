@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
+use regex::Regex;
 use std::collections::HashMap;
 
 lazy_static! {
@@ -21,11 +22,20 @@ lazy_static! {
         m.insert("I", 1);
         m
     };
-
-    static ref KEY_ORDER: Vec<&'static str> = vec!["CM", "M", "CD", "D", "XC", "C", "XL", "L", "IX", "X", "IV", "V", "I"];
+    static ref KEY_ORDER: Vec<&'static str> =
+        vec!["CM", "M", "CD", "D", "XC", "C", "XL", "L", "IX", "X", "IV", "V", "I"];
 }
 
-fn convert(input: &str) -> Result<u64, String> {
+fn is_valid(input: &str) -> bool {
+    lazy_static! {
+        static ref NUMERALS_RE: Regex =
+            Regex::new("^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$").unwrap();
+    }
+
+    NUMERALS_RE.is_match(input)
+}
+
+fn convert(input: &str) -> Result<u64, ()> {
     let mut result = 0;
     let mut intermediate = String::from(input);
 
@@ -45,11 +55,48 @@ fn main() {
     println!("{:?}", convert("II"));
 }
 
-
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+
+    #[test]
+    fn test_validate() {
+        assert_eq!(is_valid("I"), true);
+        assert_eq!(is_valid("II"), true);
+        assert_eq!(is_valid("III"), true);
+        assert_eq!(is_valid("V"), true);
+        assert_eq!(is_valid("VI"), true);
+        assert_eq!(is_valid("VII"), true);
+        assert_eq!(is_valid("VIII"), true);
+        assert_eq!(is_valid("X"), true);
+        assert_eq!(is_valid("XX"), true);
+        assert_eq!(is_valid("XXX"), true);
+        assert_eq!(is_valid("C"), true);
+        assert_eq!(is_valid("CC"), true);
+        assert_eq!(is_valid("CCC"), true);
+        assert_eq!(is_valid("M"), true);
+        assert_eq!(is_valid("MM"), true);
+        assert_eq!(is_valid("MMM"), true);
+        assert_eq!(is_valid("IV"), true);
+        assert_eq!(is_valid("IX"), true);
+        assert_eq!(is_valid("XI"), true);
+        assert_eq!(is_valid("L"), true);
+        assert_eq!(is_valid("XL"), true);
+        assert_eq!(is_valid("D"), true);
+        assert_eq!(is_valid("CD"), true);
+        assert_eq!(is_valid("CM"), true);
+        assert_eq!(is_valid("MCMXCIX"), true);
+
+        assert_eq!(is_valid("IIII"), false);
+        assert_eq!(is_valid("XXXX"), false);
+        assert_eq!(is_valid("VV"), false);
+        assert_eq!(is_valid("LL"), false);
+        assert_eq!(is_valid("DD"), false);
+        assert_eq!(is_valid("IIX"), false);
+        assert_eq!(is_valid("ABCDE"), false);
+        assert_eq!(is_valid("ICXXXXIIVV"), false);
+    }
 
     #[test]
     fn test_convert() {
